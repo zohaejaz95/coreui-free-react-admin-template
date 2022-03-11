@@ -27,6 +27,7 @@ import { getBaseURL } from "src/routes/login";
 
 const Admin = () => {
   const [backendData, setBackendData] = useState([]);
+  const [id, setID] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,13 +41,16 @@ const Admin = () => {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       "Access-Control-Allow-Origin": "*",
+      Authorization: `Bearer ${token}`,
     },
   };
 
   useEffect(() => {
-    //debugger;
-    //let url = getBaseURL();
-    //console.log("render!" + url);
+    getAllAdmins();
+    return () => console.log("unmounting...");
+  }, []);
+
+  function getAllAdmins(){
     axios
       .get(
         url + "/get/all/admin/",
@@ -56,26 +60,22 @@ const Admin = () => {
       .then((res) => {
         if (res.status === 200) {
           admins = res.data;
-          console.log("RESPONSE RECEIVED: ", admins);
+          console.log("RESPONSE RECEIVED",res);
           setBackendData(admins);
-          console.log(backendData);
+          //console.log(backendData);
         }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
+  }
 
-    // If you want to implement componentWillUnmount,
-    // return a function from here, and React will call
-    // it prior to unmounting.
-    return () => console.log("unmounting...");
-  }, []);
-
-  function setDefaultValues(){
+  function setDefaultValues() {
     setName("");
     setEmail("");
     setPassword("");
     setRole("");
+    setID("")
   }
   function updateAdmin(id) {
     let body = {
@@ -84,47 +84,25 @@ const Admin = () => {
       password: password,
       role: role,
     };
-    console.log(body);
-    axios({
-      method: "get",
-      url: url + "/update/admin/" + id,
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        name: name,
-        email: email,
-        password: password,
-        role: role,
-      },
-    })
-    // axios
-    //   .get(
-    //     url + "/update/admin/" + id,
-    //     { mode: "cors" }, {params: body},
-    //     {headers: {
-    //       "Content-Type": "application/json;charset=UTF-8",
-    //       "Access-Control-Allow-Origin": "*",
-    // "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-    // Authorization: `Bearer ${token}`
-    //     }}
-    //   )
+    axios
+      .put(url + "/update/admin/" + id, body, {
+        headers: {
+          "Content-Type": "application/json;charset=UTF-8",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+          "Authorization": `Bearer ${token}`,
+        },
+      })
       .then((res) => {
         if (res.status === 200) {
           //admins = res.data;
-          console.log("RESPONSE RECEIVED: ", admins);
-          //setBackendData(admins);
-          //console.log(backendData);
-          setDefaultValues()
+          //console.log("RESPONSE RECEIVED: ", admins);
+          getAllAdmins()
+          setVisible(!visible)
         }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
-        setDefaultValues()
       });
   }
   function viewModal(data) {
@@ -132,21 +110,19 @@ const Admin = () => {
     setEmail(data.email);
     //setPassword(data.password);
     setRole(data.role);
+    setID("")
     setVisible(!visible);
   }
-  function newAdminModal(){
-    setVisibleNew(!visible2)
+  function newAdminModal() {
+    setVisibleNew(!visible2);
   }
-  function deleteAdmin(id) {
+  function deleteAdmin(id, index) {
+    console.log(index);
     axios
-      .get(
-        url + "/delete/admin/" + id,
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/delete/admin/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", admins);
+          getAllAdmins();
         }
       })
       .catch((err) => {
@@ -154,7 +130,7 @@ const Admin = () => {
       });
   }
 
-  function addAdmin(){
+  function addAdmin() {
     let body = {
       name: name,
       email: email,
@@ -162,21 +138,17 @@ const Admin = () => {
       role: role,
     };
     axios
-      .get(
-        url + "/add/admin/" ,
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } },
-        {data: body}
-      )
+      .post(url + "/add/admin", body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
+          admins = res.data;
+          backendData.push(admins);
+          alert("Admin Added Successfully!");
+          setDefaultValues();
         }
-        setDefaultValues()
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
-        setDefaultValues()
       });
   }
   return (
@@ -197,10 +169,37 @@ const Admin = () => {
             <CCardBody>
               <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableBody>
-                  {backendData.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={item.id}>
+                <CTableRow v-for="item in tableItems" >
                       <CTableDataCell>
-                        <div>Name: {item.name}</div>
+                        <div><strong>Name</strong></div>
+                        
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div className="clearfix">
+                          <div className="float-start">
+                            <strong>Role</strong>
+                          </div>
+                        </div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div
+                        >
+                         <strong>Update</strong>
+                        </div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div
+                          
+                        >
+                          <strong>Delete</strong>
+                        </div>
+                      </CTableDataCell>
+                      
+                    </CTableRow>
+                  {backendData !==[]?backendData.map((item, index) => (
+                    <CTableRow v-for="item in tableItems" key={index}>
+                      <CTableDataCell>
+                        <div>{item.name}</div>
                         <div className="small text-medium-emphasis">
                           Email: {item.email}
                         </div>
@@ -208,7 +207,7 @@ const Admin = () => {
                       <CTableDataCell>
                         <div className="clearfix">
                           <div className="float-start">
-                            <strong>Role: {item.role}</strong>
+                            {item.role}
                           </div>
                         </div>
                       </CTableDataCell>
@@ -226,7 +225,7 @@ const Admin = () => {
                           color="danger"
                           style={{ color: "white" }}
                           className="float-end"
-                          onClick={() => deleteAdmin(item.id)}
+                          onClick={() => deleteAdmin(item.id, index)}
                         >
                           Delete
                         </CButton>
@@ -270,6 +269,7 @@ const Admin = () => {
                                 Password
                               </CInputGroupText>
                               <CFormInput
+                              type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
@@ -300,7 +300,7 @@ const Admin = () => {
                             </CButton>
                             <CButton
                               color="primary"
-                              onClick={() => updateAdmin(item.id)}
+                              onClick={() => updateAdmin(id)}
                             >
                               Save changes
                             </CButton>
@@ -308,7 +308,7 @@ const Admin = () => {
                         </CModal>
                       </>
                     </CTableRow>
-                  ))}
+                  )):(<div/>)}
                 </CTableBody>
               </CTable>
             </CCardBody>
@@ -348,6 +348,7 @@ const Admin = () => {
             <CInputGroup className="mb-3">
               <CInputGroupText id="basic-addon3">Password</CInputGroupText>
               <CFormInput
+              type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"

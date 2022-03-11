@@ -27,13 +27,17 @@ import { getBaseURL } from "src/routes/login";
 const AddItem = () => {
   const [backendData, setBackendData] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState([]);
+  const [seletedCategory, setSelectedCategory] = useState([]);
   const [prom, setProm] = useState([]);
-  //const [branchName , getBranchById] = useState([]);
+  const [id, setID] = useState("");
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
-  const [branch, setBranch] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState(null);
+  const [discount, setDiscount] = useState(null);
+  const [points, setPoints] = useState(null);
   const [visible, setVisible] = useState(false);
   const [visible2, setVisibleNew] = useState(false);
   const url = getBaseURL();
@@ -42,116 +46,103 @@ const AddItem = () => {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       "Access-Control-Allow-Origin": "*",
+      Authorization: `Bearer ${token}`,
     },
   };
 
   useEffect(() => {
+    getAllMenuItems();
+    //get all branches
     axios
-      .get(
-        url + "/get/menu/all/items",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/get/all/branches", headerConfig)
       .then((res) => {
-        // console.log(res);
-         if (res.status === 200) {
-           let data = res.data;
-           console.log(data)
-          const promise = data.map((item, index) => {
-            console.log(item.category);
-           // let arr = [];
-            //const prom = item.category.map((br, i) => {
-              axios
-                .get(
-                  url + "/get/category/" + item.category,
-                  { mode: "cors" },
-                  { headers: { Authorization: `Bearer ${token}` } }
-                )
-                .then((resp) => {
-                  if (resp.status === 200) {
-                    data[index].categoryName = resp.data.name
-                    //arr.push(resp.data.name);
-                  }
-                  setBackendData(data);
-                })
-                .catch((err) => {
-                  console.log("AXIOS ERROR: ", err);
-                });
-            //});
-            // setTimeout(() => {
-            //   Promise.all(prom).then(function () {
-            //     data[index].branchName = arr;
-            //      setBackendData(data);
-            //     setProm(prom);
-            //   });
-            // }, 1000);
-          });
-
-          setTimeout(() => {
-            Promise.all(promise).then(function () {
-              setBackendData(data);
-              console.log(data[0].branchName);
-            });
-          }, 3000);
-         }
+        if (res.status === 200) {
+          setBranches(res.data);
+        }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-
-    // axios
-    //   .get(
-    //     url + "/get/all/branches",
-    //     { mode: "cors" },
-    //     { headers: { Authorization: `Bearer ${token}` } }
-    //   )
-    //   .then((res) => {
-    //     if (res.status === 200) {
-    //       //console.log("RESPONSE RECEIVED: ", res);
-    //       setBranches(res.data);
-    //       //console.log(res);
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     console.log("AXIOS ERROR: ", err);
-    //   });
-    //console.log(backendData);
+    //get all categories
+    axios
+      .get(url + "/get/all/category", headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          setCategories(res.data);
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
     return () => console.log("unmounting...");
   }, []);
 
+  function getMenuItemsByCategory(categoryID) {
+    //backendData.filter()
+    console.log(categoryID);
+    setSelectedCategory(categoryID);
+    if (categoryID === "all") {
+      getAllMenuItems();
+    } else {
+      getItemsOnSelectedCategory();
+    }
+  }
+
+  function getItemsOnSelectedCategory() {
+    axios
+      .get(url + "/get/menu/category/" + seletedCategory, headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          setBackendData(res.data);
+          //setSelectedCategory(res.data);
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function getAllMenuItems() {
+    axios
+      .get(url + "/get/menu/all/items", headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          let data = res.data;
+          console.log(data);
+          setBackendData(data);
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
   function setDefaultValues() {
+    setID("");
     setName("");
     setImage("");
-    setBranch("");
-    setPhoneNumber("");
+    setCategory("");
+    setPrice(null);
+    setDiscount(null);
+    setPoints(null);
   }
-  function updateCustomer(id) {
+  function updateMenuItem() {
     let body = {
       name: name,
       image: image,
-      branch: branch,
+      category: category,
+      points: points,
+      discount: Number(discount),
+      price: price,
     };
-    console.log(body);
-    axios({
-      method: "get",
-      url: url + "/update/customer/" + id,
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        name: name,
-        image: image,
-        branch: branch,
-      },
-    })
+    console.log(body, id);
+    axios
+      .put(url + "/update/menu/items/" + id, body, headerConfig)
       .then((res) => {
+        console.log(res)
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
-          setDefaultValues();
+          if (seletedCategory === "all") getItemsOnSelectedCategory();
+          else getAllMenuItems();
         }
       })
       .catch((err) => {
@@ -163,10 +154,13 @@ const AddItem = () => {
     } else {
       setDefaultValues();
     }
-    console.log(backendData);
+    setID(data.id);
     setName(data.name);
     setImage(data.image);
-    setBranch(data.branch);
+    setCategory(data.category);
+    setPoints(data.points);
+    setPrice(data.price);
+    setDiscount(data.discount);
     setVisible(!visible);
   }
 
@@ -180,14 +174,11 @@ const AddItem = () => {
 
   function deleteCustomer(id) {
     axios
-      .get(
-        url + "/delete/customer/" + id,
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/delete/menu/items/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", admins);
+          console.log("RESPONSE RECEIVED");
+          getAllMenuItems();
         }
       })
       .catch((err) => {
@@ -199,20 +190,19 @@ const AddItem = () => {
     let body = {
       name: name,
       image: image,
-      branch: branch,
+      category: category,
+      points: points,
+      discount: Number(discount),
+      price: price,
     };
     axios
-      .get(
-        url + "/add/customer/",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } },
-        { data: body }
-      )
+      .post(url + "/add/menu/items", body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
+          getAllMenuItems();
+          //setDefaultValues();
         }
-        setDefaultValues();
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -225,6 +215,33 @@ const AddItem = () => {
           <CCard className="mb-4">
             <CCardHeader>
               Menu Items
+              {/* <CFormSelect
+                // multiple={true}
+                aria-label="Select Branch"
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+              >
+                {branches.map((item, index) => (
+                  <option key={index} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </CFormSelect> */}
+              <CFormSelect
+                style={{ width: "30%", marginLeft: 10 }}
+                // multiple={true}
+                className="float-end"
+                aria-label="Select Category"
+                value={seletedCategory}
+                onChange={(e) => getMenuItemsByCategory(e.target.value)}
+              >
+                <option value="all">All Items</option>
+                {categories.map((item, index) => (
+                  <option key={index} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </CFormSelect>
               <CButton
                 color="primary"
                 className="float-end"
@@ -236,6 +253,66 @@ const AddItem = () => {
             <CCardBody>
               <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableBody>
+                  <CTableRow>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Sr#.</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Image</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Name</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Category</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Price </strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Points </strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Discount </strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Discounted Price</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Update</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Delete</strong>
+                      </div>
+                    </CTableDataCell>
+                  </CTableRow>
                   {backendData.map((item, index) => (
                     <CTableRow v-for="item in tableItems" key={item.id}>
                       <CTableDataCell>
@@ -248,33 +325,21 @@ const AddItem = () => {
                         <div>{item.name}</div>
                       </CTableDataCell>
                       <CTableDataCell>
-                        <div className="clearfix">
-                          <div className="float-start">
-                            <strong>Category: </strong>
-                          </div>
-                          <div className="float-start">
-                            <strong>{item.categoryName} </strong>
-                          </div>
+                        <div>{item.category.name}</div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div>AED {item.price}</div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div> {item.points}</div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div>{item.discount}%</div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <div>
+                          AED {item.price - (item.price * item.discount) / 100}
                         </div>
-                        {/* {item.branchName ? (
-                          item.branchName.map((i, j) => (
-                            <div className="clearfix">
-                              <div className="float-start">
-                                <small className="text-medium-emphasis">
-                                  {i}
-                                </small>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="clearfix">
-                            <div className="float-end">
-                              <small className="text-medium-emphasis">
-                                {item.branch}
-                              </small>
-                            </div>
-                          </div>
-                        )} */}
                       </CTableDataCell>
                       <CTableDataCell>
                         <CButton
@@ -302,7 +367,7 @@ const AddItem = () => {
                           onClose={() => setVisible(false)}
                         >
                           <CModalHeader>
-                            <CModalTitle>Update Admin</CModalTitle>
+                            <CModalTitle>Update Item</CModalTitle>
                           </CModalHeader>
                           <CModalBody>
                             <CInputGroup className="mb-3">
@@ -312,12 +377,12 @@ const AddItem = () => {
                               <CFormInput
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Category Name"
+                                placeholder="Item Name"
                                 aria-label="Name"
                                 aria-describedby="basic-addon1"
                               />
                             </CInputGroup>
-                            <CInputGroup className="mb-3">
+                            {/* <CInputGroup className="mb-3">
                               <CFormInput type="file" id="inputGroupFile01" />
                               <CInputGroupText
                                 component="label"
@@ -325,15 +390,68 @@ const AddItem = () => {
                               >
                                 Upload Image
                               </CInputGroupText>
+                            </CInputGroup> */}
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon2">
+                                Image
+                              </CInputGroupText>
+                              <CFormInput
+                                value={image}
+                                onChange={(e) => setImage(e.target.value)}
+                                placeholder="Image Link"
+                                aria-label="Image Link"
+                                aria-describedby="basic-addon2"
+                              />
+                            </CInputGroup>
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon1">
+                                Price
+                              </CInputGroupText>
+                              <CFormInput
+                                type="number"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                placeholder="Item Price"
+                                aria-label="Price"
+                                aria-describedby="basic-addon1"
+                              />
+                            </CInputGroup>
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon1">
+                                Discount
+                              </CInputGroupText>
+                              <CFormInput
+                                type="number"
+                                value={discount}
+                                onChange={(e) => setDiscount(e.target.value)}
+                                placeholder="Price"
+                                aria-label="Price"
+                                aria-describedby="basic-addon1"
+                              />
+                              <CInputGroupText id="basic-addon1">
+                                %
+                              </CInputGroupText>
+                            </CInputGroup>
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon1">
+                                Points
+                              </CInputGroupText>
+                              <CFormInput
+                                type="number"
+                                value={points}
+                                onChange={(e) => setPoints(e.target.value)}
+                                placeholder="Item Points"
+                                aria-label="Points"
+                                aria-describedby="basic-addon1"
+                              />
                             </CInputGroup>
                             <CFormSelect
-                              aria-label="Select Branch"
-                              value={selectedBranch}
-                              onChange={(e) =>
-                                setSelectedBranch(e.target.value)
-                              }
+                              // multiple={true}
+                              aria-label="Select Category"
+                              value={category}
+                              onChange={(e) => setCategory(e.target.value)}
                             >
-                              {branches.map((item, index) => (
+                              {categories.map((item, index) => (
                                 <option key={index} value={item.id}>
                                   {item.name}
                                 </option>
@@ -349,7 +467,7 @@ const AddItem = () => {
                             </CButton>
                             <CButton
                               color="primary"
-                              onClick={() => updateCustomer(item.id)}
+                              onClick={() => updateMenuItem()}
                             >
                               Save changes
                             </CButton>
@@ -371,7 +489,7 @@ const AddItem = () => {
           onClose={() => setVisibleNew(false)}
         >
           <CModalHeader>
-            <CModalTitle>Add Admin</CModalTitle>
+            <CModalTitle>Add Item</CModalTitle>
           </CModalHeader>
           <CModalBody>
             <CInputGroup className="mb-3">
@@ -384,8 +502,17 @@ const AddItem = () => {
                 aria-describedby="basic-addon1"
               />
             </CInputGroup>
-
             <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon2">Image</CInputGroupText>
+              <CFormInput
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="Image Link"
+                aria-label="Image Link"
+                aria-describedby="basic-addon2"
+              />
+            </CInputGroup>
+            {/* <CInputGroup className="mb-3">
               <CFormInput
                 type="file"
                 id="inputGroupFile01"
@@ -395,13 +522,45 @@ const AddItem = () => {
               <CInputGroupText component="label" htmlFor="inputGroupFile02">
                 Upload Image
               </CInputGroupText>
+            </CInputGroup> */}
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon1">Price</CInputGroupText>
+              <CFormInput
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Item Price"
+                aria-label="Price"
+                aria-describedby="basic-addon1"
+              />
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon1">Discount</CInputGroupText>
+              <CFormInput
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                placeholder="Price"
+                aria-label="Price"
+                aria-describedby="basic-addon1"
+              />
+              <CInputGroupText id="basic-addon1">%</CInputGroupText>
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon1">Points</CInputGroupText>
+              <CFormInput
+                value={points}
+                onChange={(e) => setPoints(e.target.value)}
+                placeholder="Item Points"
+                aria-label="Points"
+                aria-describedby="basic-addon1"
+              />
             </CInputGroup>
             <CFormSelect
-              aria-label="Select Branch"
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
+              // multiple={true}
+              aria-label="Select Category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
             >
-              {branches.map((item, index) => (
+              {categories.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}
                 </option>

@@ -20,16 +20,21 @@ import {
   CTableDataCell,
   CTableRow,
   CFormSelect,
+  CFormLabel,
 } from "@coreui/react";
 const axios = require("axios");
 import { getBaseURL } from "src/routes/login";
+import { CDatePicker } from "@coreui/react-lab";
+import DatePicker from "react-date-picker";
 
 const Customer = () => {
   const [backendData, setBackendData] = useState([]);
+  const [id, setID] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [dob, setDoB] = useState("");
+  const [dob, setDoB] = useState(new Date());
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [visible2, setVisibleNew] = useState(false);
   const url = getBaseURL();
@@ -38,16 +43,18 @@ const Customer = () => {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       "Access-Control-Allow-Origin": "*",
+      Authorization: `Bearer ${token}`,
     },
   };
 
   useEffect(() => {
+    getAllCustomers();
+    return () => console.log("unmounting...");
+  }, []);
+
+  function getAllCustomers() {
     axios
-      .get(
-        url + "/get/all/customer",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/get/all/customer", headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
@@ -58,14 +65,14 @@ const Customer = () => {
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-    return () => console.log("unmounting...");
-  }, []);
+  }
 
   function setDefaultValues() {
     setName("");
     setEmail("");
     setDoB("");
     setPhoneNumber("");
+    setID("");
   }
   function updateCustomer(id) {
     let body = {
@@ -73,29 +80,14 @@ const Customer = () => {
       email: email,
       dob: dob,
       phoneNumber: phoneNumber,
+      password: password,
     };
-    console.log(body);
-    axios({
-      method: "get",
-      url: url + "/update/customer/" + id,
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        name: name,
-        email: email,
-        dob: dob,
-        phoneNumber: phoneNumber,
-      },
-    })
+    axios
+      .put(url + "/update/customer/" + id, body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
-          setDefaultValues();
+          console.log("RESPONSE RECEIVED");
+          getAllCustomers();
         }
       })
       .catch((err) => {
@@ -112,6 +104,7 @@ const Customer = () => {
     setEmail(data.email);
     setDoB(date);
     setPhoneNumber(data.phoneNumber);
+    setID(data.id);
     setVisible(!visible);
   }
 
@@ -125,14 +118,11 @@ const Customer = () => {
 
   function deleteCustomer(id) {
     axios
-      .get(
-        url + "/delete/customer/" + id,
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/delete/customer/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", admins);
+          console.log("RESPONSE RECEIVED");
+          getAllCustomers();
         }
       })
       .catch((err) => {
@@ -141,24 +131,22 @@ const Customer = () => {
   }
 
   function addCustomer() {
+    console.log(dob);
     let body = {
       name: name,
       email: email,
       dob: dob,
       phoneNumber: phoneNumber,
+      password: password,
     };
     axios
-      .get(
-        url + "/add/customer/",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } },
-        { data: body }
-      )
+      .post(url + "/add/customer", body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
+          getAllCustomers();
+          setDefaultValues();
         }
-        setDefaultValues();
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -183,129 +171,180 @@ const Customer = () => {
             <CCardBody>
               <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableBody>
-                  {backendData.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={item.id}>
-                      <CTableDataCell>
-                        <div>Name: {item.name}</div>
-                        <div className="small text-medium-emphasis">
-                          Email: {item.email}
+                  <CTableRow v-for="item in tableItems">
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Name</strong>
                         </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="clearfix">
-                          <div className="float-start">
-                            <strong>Phone: {item.phoneNumber}</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Phone</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Date of Birth</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Reward Points</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Update</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Delete</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                  </CTableRow>
+                  {backendData !== [] ? (
+                    backendData.map((item, index) => (
+                      <CTableRow v-for="item in tableItems" key={item.id}>
+                        <CTableDataCell>
+                          <div>{item.name}</div>
+                          <div className="small text-medium-emphasis">
+                            Email: {item.email}
                           </div>
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton
-                          color="primary"
-                          className="float-end"
-                          onClick={() => viewModal(item)}
-                        >
-                          Update
-                        </CButton>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton
-                          color="danger"
-                          style={{ color: "white" }}
-                          className="float-end"
-                          onClick={() => deleteCustomer(item.id)}
-                        >
-                          Delete
-                        </CButton>
-                      </CTableDataCell>
-                      <>
-                        <CModal
-                          backdrop="static"
-                          visible={visible}
-                          onClose={() => setVisible(false)}
-                        >
-                          <CModalHeader>
-                            <CModalTitle>Update Admin</CModalTitle>
-                          </CModalHeader>
-                          <CModalBody>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon1">
-                                Name
-                              </CInputGroupText>
-                              <CFormInput
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Username"
-                                aria-label="Username"
-                                aria-describedby="basic-addon1"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon2">
-                                Email
-                              </CInputGroupText>
-                              <CFormInput
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Email"
-                                aria-label="Email"
-                                aria-describedby="basic-addon2"
-                              />
-                            </CInputGroup>
-                            {/* <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon2">
-                                Password
-                              </CInputGroupText>
-                              <CFormInput
-                                value={dob}
-                                onChange={(e) => setDoB(e.target.value)}
-                                placeholder="Date of Birth"
-                                aria-label="Date of Birth"
-                                aria-describedby="basic-addon2"
-                              />
-                            </CInputGroup> */}
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon3">
-                                DoB
-                              </CInputGroupText>
-                              <CFormInput
-                                value={dob}
-                                onChange={(e) => setDoB(e.target.value)}
-                                placeholder="Date of Birth"
-                                aria-label="Date of Birth"
-                                aria-describedby="basic-addon3"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon3">
-                                Phone
-                              </CInputGroupText>
-                              <CFormInput
-                                value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder="Phone Number"
-                                aria-label="Phone Number"
-                                aria-describedby="basic-addon3"
-                              />
-                            </CInputGroup>
-                          </CModalBody>
-                          <CModalFooter>
-                            <CButton
-                              color="secondary"
-                              onClick={() => setVisible(false)}
-                            >
-                              Close
-                            </CButton>
-                            <CButton
-                              color="primary"
-                              onClick={() => updateCustomer(item.id)}
-                            >
-                              Save changes
-                            </CButton>
-                          </CModalFooter>
-                        </CModal>
-                      </>
-                    </CTableRow>
-                  ))}
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div className="clearfix">
+                            <div className="float-start">
+                              <strong>{item.phoneNumber}</strong>
+                            </div>
+                          </div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div>{item.dob}</div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div>{item.rewards}</div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CButton
+                            color="primary"
+                            className="float-end"
+                            onClick={() => viewModal(item)}
+                          >
+                            Update
+                          </CButton>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CButton
+                            color="danger"
+                            style={{ color: "white" }}
+                            className="float-end"
+                            onClick={() => deleteCustomer(item.id)}
+                          >
+                            Delete
+                          </CButton>
+                        </CTableDataCell>
+                        <>
+                          <CModal
+                            backdrop="static"
+                            visible={visible}
+                            onClose={() => setVisible(false)}
+                          >
+                            <CModalHeader>
+                              <CModalTitle>Update Customer</CModalTitle>
+                            </CModalHeader>
+                            <CModalBody>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon1">
+                                  Name
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={name}
+                                  onChange={(e) => setName(e.target.value)}
+                                  placeholder="Username"
+                                  aria-label="Username"
+                                  aria-describedby="basic-addon1"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon2">
+                                  Email
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={email}
+                                  onChange={(e) => setEmail(e.target.value)}
+                                  placeholder="Email"
+                                  aria-label="Email"
+                                  aria-describedby="basic-addon2"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon2">
+                                  Password
+                                </CInputGroupText>
+                                <CFormInput
+                                  type="password"
+                                  value={password}
+                                  onChange={(e) => setPassword(e.target.value)}
+                                  placeholder="Password"
+                                  aria-label="Password"
+                                  aria-describedby="basic-addon2"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon3">
+                                  DoB
+                                </CInputGroupText>
+                                <DatePicker onChange={setDoB} value={dob} />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon3">
+                                  Phone
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={phoneNumber}
+                                  onChange={(e) =>
+                                    setPhoneNumber(e.target.value)
+                                  }
+                                  placeholder="Phone Number"
+                                  aria-label="Phone Number"
+                                  aria-describedby="basic-addon3"
+                                />
+                              </CInputGroup>
+                            </CModalBody>
+                            <CModalFooter>
+                              <CButton
+                                color="secondary"
+                                onClick={() => setVisible(false)}
+                              >
+                                Close
+                              </CButton>
+                              <CButton
+                                color="primary"
+                                onClick={() => updateCustomer(id)}
+                              >
+                                Save changes
+                              </CButton>
+                            </CModalFooter>
+                          </CModal>
+                        </>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <div></div>
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>
@@ -343,14 +382,31 @@ const Customer = () => {
               />
             </CInputGroup>
             <CInputGroup className="mb-3">
-              <CInputGroupText id="basic-addon3">DoB</CInputGroupText>
+              <CInputGroupText id="basic-addon2">Password</CInputGroupText>
               <CFormInput
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                aria-label="Password"
+                aria-describedby="basic-addon2"
+              />
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon3">DoB</CInputGroupText>
+              {/* <CFormInput
                 value={dob}
                 onChange={(e) => setDoB(e.target.value)}
                 placeholder="Date of Birth"
                 aria-label="Date of Birth"
                 aria-describedby="basic-addon3"
-              />
+              /> */}
+              <DatePicker onChange={setDoB} value={dob} />
+              {/* <CDatePicker value={dob}
+                id="datepicker"
+                onChange={(e) => setDoB(e.target.value)}
+                placeholder="Date of Birth"
+                aria-label="Date of Birth"/> */}
             </CInputGroup>
             <CInputGroup className="mb-3">
               <CInputGroupText id="basic-addon3">Phone</CInputGroupText>

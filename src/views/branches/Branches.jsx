@@ -26,6 +26,7 @@ import { getBaseURL } from "src/routes/login";
 
 const Branches = () => {
   const [backendData, setBackendData] = useState([]);
+  const [id, setID] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -41,19 +42,21 @@ const Branches = () => {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       "Access-Control-Allow-Origin": "*",
+      Authorization: `Bearer ${token}`,
     },
   };
 
   useEffect(() => {
+    getAllBranches();
+    return () => console.log("unmounting...");
+  }, []);
+
+  function getAllBranches() {
     axios
-      .get(
-        url + "/get/all/branches",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/get/all/branches", headerConfig)
       .then((res) => {
-        if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
+        if (res.status === 200 && res.data) {
+          console.log("RESPONSE RECEIVED");
           setBackendData(res.data);
           console.log(res);
         }
@@ -61,8 +64,7 @@ const Branches = () => {
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-    return () => console.log("unmounting...");
-  }, []);
+  }
 
   function setDefaultValues() {
     setName("");
@@ -72,8 +74,13 @@ const Branches = () => {
     setFloor(0);
     setLocation("");
     setImage("");
+    setID("");
   }
   function updateBranch(id) {
+    var regex = new RegExp("@(.*),(.*)");
+    var lat_long_match = location.match(regex);
+    var lat = lat_long_match[1];
+    var long = lat_long_match[2];
     let body = {
       name: name,
       address: address,
@@ -81,33 +88,19 @@ const Branches = () => {
       state: state,
       floor: floor,
       image: image,
-      location: location,
+      location: {
+        lat: lat,
+        lng: long,
+      },
     };
     console.log(body);
-    axios({
-      method: "get",
-      url: url + "/update/branch/" + id,
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        name: name,
-        address: address,
-        city: city,
-        state: state,
-        floor: floor,
-        image: image,
-        location: location,
-      },
-    })
+    axios
+      .put(url + "/update/branch/" + id, body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
-          setDefaultValues();
+          getAllBranches();
+          //setDefaultValues();
         }
       })
       .catch((err) => {
@@ -115,16 +108,24 @@ const Branches = () => {
       });
   }
   function viewModal(data) {
-    if (visible) {
-    } else {
-      setDefaultValues();
-    }
+    // if (visible) {
+    // } else {
+    //   setDefaultValues();
+    // }
+    setDefaultValues();
     setName(data.name);
     setAddress(data.address);
     setCity(data.city);
     setState(data.state);
     setFloor(data.floor);
-    setLocation(data.location.lat + data.location.lng);
+    setLocation(
+      "https://www.google.com/maps/place//@" +
+        data.location.lat +
+        "," +
+        data.location.lng
+    );
+    setImage(data.image);
+    setID(data.id);
     //setImage(data.image)
     setVisible(!visible);
   }
@@ -139,14 +140,11 @@ const Branches = () => {
 
   function deleteBranch(id) {
     axios
-      .get(
-        url + "/delete/branch/" + id,
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(url + "/delete/branch/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", admins);
+          console.log("RESPONSE RECEIVED");
+          getAllBranches();
         }
       })
       .catch((err) => {
@@ -154,7 +152,13 @@ const Branches = () => {
       });
   }
 
+  function uploadImage() {}
+
   function addBranch() {
+    var regex = new RegExp("@(.*),(.*),");
+    var lat_long_match = location.match(regex);
+    var lat = lat_long_match[1];
+    var long = lat_long_match[2];
     let body = {
       name: name,
       address: address,
@@ -162,20 +166,20 @@ const Branches = () => {
       state: state,
       floor: floor,
       image: image,
-      location: location,
+      location: {
+        lat: lat,
+        lng: long,
+      },
     };
+    console.log(body);
     axios
-      .get(
-        url + "/add/branch",
-        { mode: "cors" },
-        { headers: { Authorization: `Bearer ${token}` } },
-        { data: body }
-      )
+      .post(url + "/add/branch", body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
+          getAllBranches();
         }
-        setDefaultValues();
+        //setDefaultValues();
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -200,118 +204,177 @@ const Branches = () => {
             <CCardBody>
               <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableBody>
-                  {backendData.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={item.id}>
-                      <CTableDataCell>
-                        <div className="clearfix">
-                          <div className="float-start">
-                            <strong>{index + 1}</strong>
+                  <CTableRow>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Sr#.</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell className="text-center">
+                      <div>
+                        <strong>Image</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div className="clearfix">
+                        <div className="float-start">
+                          <strong>Name</strong>
+                        </div>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>City</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Location</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Update</strong>
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Delete</strong>
+                      </div>
+                    </CTableDataCell>
+                  </CTableRow>
+                  {backendData !== [] ? (
+                    backendData.map((item, index) => (
+                      <CTableRow key={item.id}>
+                        <CTableDataCell>
+                          <div className="clearfix">
+                            <div className="float-start">
+                              <strong>{index + 1}</strong>
+                            </div>
                           </div>
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="clearfix">
-                          <div className="float-start">
-                            <strong>{item.name}</strong>
+                        </CTableDataCell>
+                        <CTableDataCell className="text-center">
+                          <CAvatar size="md" src={item.image} />
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div className="clearfix">
+                            <div className="float-start">
+                              <strong>{item.name}</strong>
+                            </div>
                           </div>
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>City: {item.city + ", " + item.state}</div>
-                        <div className="small text-medium-emphasis">
-                          Address: {item.address}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton
-                          color="primary"
-                          className="float-end"
-                          onClick={() => viewModal(item)}
-                        >
-                          Update
-                        </CButton>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton
-                          color="danger"
-                          style={{ color: "white" }}
-                          className="float-end"
-                          onClick={() => deleteBranch(item.id)}
-                        >
-                          Delete
-                        </CButton>
-                      </CTableDataCell>
-                      <>
-                        <CModal
-                          backdrop="static"
-                          visible={visible}
-                          onClose={() => setVisible(false)}
-                        >
-                          <CModalHeader>
-                            <CModalTitle>Update Admin</CModalTitle>
-                          </CModalHeader>
-                          <CModalBody>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon1">
-                                Name
-                              </CInputGroupText>
-                              <CFormInput
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Username"
-                                aria-label="Username"
-                                aria-describedby="basic-addon1"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon2">
-                                Address
-                              </CInputGroupText>
-                              <CFormInput
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                placeholder="Email"
-                                aria-label="Email"
-                                aria-describedby="basic-addon2"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon3">
-                                City
-                              </CInputGroupText>
-                              <CFormInput
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                placeholder="Date of Birth"
-                                aria-label="Date of Birth"
-                                aria-describedby="basic-addon3"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon3">
-                                State
-                              </CInputGroupText>
-                              <CFormInput
-                                value={state}
-                                onChange={(e) => setState(e.target.value)}
-                                placeholder="Phone Number"
-                                aria-label="Phone Number"
-                                aria-describedby="basic-addon3"
-                              />
-                            </CInputGroup>
-                            <CInputGroup className="mb-3">
-                              <CInputGroupText id="basic-addon2">
-                                Floor
-                              </CInputGroupText>
-                              <CFormInput
-                                value={floor}
-                                onChange={(e) => setFloor(e.target.value)}
-                                placeholder="Floor"
-                                aria-label="Floor"
-                                aria-describedby="basic-addon2"
-                              />
-                            </CInputGroup>
-                            {/* <CInputGroup className="mb-3">
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <div>{item.city + ", " + item.state}</div>
+                          <div className="small text-medium-emphasis">
+                            Address: {item.address + ", floor: " + item.floor}
+                          </div>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CButton
+                            color="primary"
+                            className="float-end"
+                            href={
+                              "https://www.google.com/maps/dir//" +
+                              item.location.lat +
+                              "," +
+                              item.location.lng
+                            }
+                          >
+                            Location
+                          </CButton>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CButton
+                            color="primary"
+                            className="float-end"
+                            onClick={() => viewModal(item)}
+                          >
+                            Update
+                          </CButton>
+                        </CTableDataCell>
+                        <CTableDataCell>
+                          <CButton
+                            color="danger"
+                            style={{ color: "white" }}
+                            className="float-end"
+                            onClick={() => deleteBranch(item.id)}
+                          >
+                            Delete
+                          </CButton>
+                        </CTableDataCell>
+                        <>
+                          <CModal
+                            backdrop="static"
+                            visible={visible}
+                            onClose={() => setVisible(false)}
+                          >
+                            <CModalHeader>
+                              <CModalTitle>Update Branch</CModalTitle>
+                            </CModalHeader>
+                            <CModalBody>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon1">
+                                  Name
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={name}
+                                  onChange={(e) => setName(e.target.value)}
+                                  placeholder="Username"
+                                  aria-label="Username"
+                                  aria-describedby="basic-addon1"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon2">
+                                  Address
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={address}
+                                  onChange={(e) => setAddress(e.target.value)}
+                                  placeholder="Email"
+                                  aria-label="Email"
+                                  aria-describedby="basic-addon2"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon3">
+                                  City
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={city}
+                                  onChange={(e) => setCity(e.target.value)}
+                                  placeholder="Date of Birth"
+                                  aria-label="Date of Birth"
+                                  aria-describedby="basic-addon3"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon3">
+                                  State
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={state}
+                                  onChange={(e) => setState(e.target.value)}
+                                  placeholder="Phone Number"
+                                  aria-label="Phone Number"
+                                  aria-describedby="basic-addon3"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon2">
+                                  Floor
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={floor}
+                                  onChange={(e) => setFloor(e.target.value)}
+                                  placeholder="Floor"
+                                  aria-label="Floor"
+                                  aria-describedby="basic-addon2"
+                                />
+                              </CInputGroup>
+                              <CInputGroup className="mb-3">
                                 <CInputGroupText id="basic-addon2">
                                   Location
                                 </CInputGroupText>
@@ -322,26 +385,50 @@ const Branches = () => {
                                   aria-label="Location"
                                   aria-describedby="basic-addon2"
                                 />
-                              </CInputGroup> */}
-                          </CModalBody>
-                          <CModalFooter>
-                            <CButton
-                              color="secondary"
-                              onClick={() => setVisible(false)}
-                            >
-                              Close
-                            </CButton>
-                            <CButton
-                              color="primary"
-                              onClick={() => updateBranch(item.id)}
-                            >
-                              Save changes
-                            </CButton>
-                          </CModalFooter>
-                        </CModal>
-                      </>
-                    </CTableRow>
-                  ))}
+                              </CInputGroup>
+                              {/* <CInputGroup className="mb-3">
+                              <CFormInput type="file" id="inputGroupFile01" />
+                              <CInputGroupText
+                                component="label"
+                                htmlFor="inputGroupFile02"
+                              >
+                                Upload Image
+                              </CInputGroupText>
+                            </CInputGroup> */}
+                              <CInputGroup className="mb-3">
+                                <CInputGroupText id="basic-addon2">
+                                  Image
+                                </CInputGroupText>
+                                <CFormInput
+                                  value={image}
+                                  onChange={(e) => setImage(e.target.value)}
+                                  placeholder="Image Link"
+                                  aria-label="Image Link"
+                                  aria-describedby="basic-addon2"
+                                />
+                              </CInputGroup>
+                            </CModalBody>
+                            <CModalFooter>
+                              <CButton
+                                color="secondary"
+                                onClick={() => setVisible(false)}
+                              >
+                                Close
+                              </CButton>
+                              <CButton
+                                color="primary"
+                                onClick={() => updateBranch(id)}
+                              >
+                                Save changes
+                              </CButton>
+                            </CModalFooter>
+                          </CModal>
+                        </>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <div></div>
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>
@@ -405,6 +492,32 @@ const Branches = () => {
                 onChange={(e) => setFloor(e.target.value)}
                 placeholder="Floor"
                 aria-label="Floor"
+                aria-describedby="basic-addon2"
+              />
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon2">Location</CInputGroupText>
+              <CFormInput
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Location"
+                aria-label="Location"
+                aria-describedby="basic-addon2"
+              />
+            </CInputGroup>
+            {/* <CInputGroup className="mb-3">
+              <CFormInput type="file" id="inputGroupFile01" />
+              <CInputGroupText component="label" htmlFor="inputGroupFile02">
+                Upload Image
+              </CInputGroupText>
+                          </CInputGroup>*/}
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon2">Image</CInputGroupText>
+              <CFormInput
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="Image Link"
+                aria-label="Image Link"
                 aria-describedby="basic-addon2"
               />
             </CInputGroup>

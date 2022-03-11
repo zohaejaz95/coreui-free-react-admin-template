@@ -9,6 +9,7 @@ const Branches = React.lazy(() => import("./views/branches/Branches"));
 const Delivery = React.lazy(() => import("./views/orders/Delivery"));
 const Reservation = React.lazy(() => import("./views/orders/Reservation"));
 const DineIn = React.lazy(() => import("./views/orders/DineIn"));
+const Pickup = React.lazy(() => import("./views/orders/Pickup"));
 
 //Menu
 const Menu = React.lazy(() => import("./views/menu/Menu"));
@@ -104,6 +105,7 @@ const routes = [
   { path: "/order/delivery", name: "Delivery", component: Delivery },
   { path: "/order/reservation", name: "Reservation", component: Reservation },
   { path: "/order/dinein", name: "DineIn", component: DineIn },
+  { path: "/order/pickup", name: "DineIn", component: Pickup },
   { path: "/menu", name: "Menu Categories", component: Menu },
   { path: "/items", name: "Menu Items", component: AddItem },
   { path: "/app", name: "App", component: Slider, exact: true },

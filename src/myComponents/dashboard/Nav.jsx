@@ -57,6 +57,11 @@ const Nav = [
         name: 'Dine in',
         to: '/order/dinein',
       },
+      {
+        component: CNavItem,
+        name: 'Pickup',
+        to: '/order/pickup',
+      },
     ],
   },
   {
