@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import {
@@ -19,12 +19,28 @@ import "simplebar/dist/simplebar.min.css";
 
 // sidebar nav config
 //import navigation from "../_nav";
-import navigation from "../myComponents/dashboard/Nav";
+//import navigation from "../myComponents/dashboard/SuperAdminNav";
+import OfficeManager from "../myComponents/dashboard/OfficeManager";
+import SuperAdmin from "../myComponents/dashboard/SuperAdminNav";
+import BranchManager from "../myComponents/dashboard/BranchManagerNav";
+import UnLogged from "../myComponents/dashboard/UnLoggedNav";
 
 const AppSidebar = () => {
+  const [navigation, setNavigation] = useState();
   const dispatch = useDispatch();
   const unfoldable = useSelector((state) => state.sidebarUnfoldable);
   const sidebarShow = useSelector((state) => state.sidebarShow);
+  useEffect(() => {
+    if (sessionStorage.getItem("role") === "Super Admin") {
+      setNavigation(SuperAdmin);
+    } else if (sessionStorage.getItem("role") === "Branch Manager") {
+      setNavigation(BranchManager);
+    } else if (sessionStorage.getItem("role") === "Office Manager") {
+      setNavigation(OfficeManager);
+    } else {
+      setNavigation(UnLogged);
+    }
+  });
 
   return (
     <CSidebar

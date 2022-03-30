@@ -21,6 +21,10 @@ import { logo } from "src/assets/brand/logo";
 const AppHeader = () => {
   const dispatch = useDispatch();
   const sidebarShow = useSelector((state) => state.sidebarShow);
+  const logout = () => {
+    sessionStorage.clear();
+    history.pushState("/login");
+  };
 
   return (
     <CHeader position="sticky" className="mb-4">
@@ -52,6 +56,11 @@ const AppHeader = () => {
           </CNavItem> */}
         </CHeaderNav>
         <CHeaderNav>
+          <CNavItem>
+            <CNavLink href="/login" onClick={() => logout()}>
+              logout
+            </CNavLink>
+          </CNavItem>
           <CNavItem>
             <CNavLink href="#">
               <CIcon icon={cilBell} size="lg" />
