@@ -95,7 +95,7 @@ const Pickup = () => {
     };
     console.log(body);
     axios
-      .put(url + "/update/order/"+id, headerConfig)
+      .put(url + "/update/order/"+id,body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           //setBranches(res.data);

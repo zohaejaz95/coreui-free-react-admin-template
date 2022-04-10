@@ -35,6 +35,8 @@ const AddItem = () => {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [category, setCategory] = useState("");
+  const [small, setSmall] = useState(0);
+  const [large, setLarge] = useState(0);
   const [price, setPrice] = useState(null);
   const [discount, setDiscount] = useState(null);
   const [points, setPoints] = useState(null);
@@ -134,12 +136,14 @@ const AddItem = () => {
       points: points,
       discount: Number(discount),
       price: price,
+      small: small,
+      large: large,
     };
-    console.log(body, id);
+    //console.log(body, id);
     axios
       .put(url + "/update/menu/items/" + id, body, headerConfig)
       .then((res) => {
-        console.log(res)
+        console.log(res);
         if (res.status === 200) {
           if (seletedCategory === "all") getItemsOnSelectedCategory();
           else getAllMenuItems();
@@ -186,7 +190,7 @@ const AddItem = () => {
       });
   }
 
-  function addCustomer() {
+  function addMenuItem() {
     let body = {
       name: name,
       image: image,
@@ -194,7 +198,10 @@ const AddItem = () => {
       points: points,
       discount: Number(discount),
       price: price,
+      small: small,
+      large: large,
     };
+    console.log(body)
     axios
       .post(url + "/add/menu/items", body, headerConfig)
       .then((res) => {
@@ -405,12 +412,38 @@ const AddItem = () => {
                             </CInputGroup>
                             <CInputGroup className="mb-3">
                               <CInputGroupText id="basic-addon1">
-                                Price
+                                Standard Size Price
                               </CInputGroupText>
                               <CFormInput
                                 type="number"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
+                                placeholder="Item Price"
+                                aria-label="Price"
+                                aria-describedby="basic-addon1"
+                              />
+                            </CInputGroup>
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon1">
+                                Small Size Price
+                              </CInputGroupText>
+                              <CFormInput
+                                type="number"
+                                value={small}
+                                onChange={(e) => setSmall(e.target.value)}
+                                placeholder="Item Price"
+                                aria-label="Price"
+                                aria-describedby="basic-addon1"
+                              />
+                            </CInputGroup>
+                            <CInputGroup className="mb-3">
+                              <CInputGroupText id="basic-addon1">
+                                Large Size Price
+                              </CInputGroupText>
+                              <CFormInput
+                                type="number"
+                                value={large}
+                                onChange={(e) => setLarge(e.target.value)}
                                 placeholder="Item Price"
                                 aria-label="Price"
                                 aria-describedby="basic-addon1"
@@ -424,8 +457,8 @@ const AddItem = () => {
                                 type="number"
                                 value={discount}
                                 onChange={(e) => setDiscount(e.target.value)}
-                                placeholder="Price"
-                                aria-label="Price"
+                                placeholder="Discount"
+                                aria-label="Discount"
                                 aria-describedby="basic-addon1"
                               />
                               <CInputGroupText id="basic-addon1">
@@ -451,6 +484,9 @@ const AddItem = () => {
                               value={category}
                               onChange={(e) => setCategory(e.target.value)}
                             >
+                              <option unselectable="true">
+                                  Select Category
+                                </option>
                               {categories.map((item, index) => (
                                 <option key={index} value={item.id}>
                                   {item.name}
@@ -497,7 +533,7 @@ const AddItem = () => {
               <CFormInput
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Category Name"
+                placeholder="Item Name"
                 aria-label="Name"
                 aria-describedby="basic-addon1"
               />
@@ -524,10 +560,39 @@ const AddItem = () => {
               </CInputGroupText>
             </CInputGroup> */}
             <CInputGroup className="mb-3">
-              <CInputGroupText id="basic-addon1">Price</CInputGroupText>
+              <CInputGroupText id="basic-addon1">
+                Standard Size Price
+              </CInputGroupText>
               <CFormInput
+                type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+                placeholder="Item Price"
+                aria-label="Price"
+                aria-describedby="basic-addon1"
+              />
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon1">
+                Small Size Price
+              </CInputGroupText>
+              <CFormInput
+                type="number"
+                value={small}
+                onChange={(e) => setSmall(e.target.value)}
+                placeholder="Item Price"
+                aria-label="Price"
+                aria-describedby="basic-addon1"
+              />
+            </CInputGroup>
+            <CInputGroup className="mb-3">
+              <CInputGroupText id="basic-addon1">
+                Large Size Price
+              </CInputGroupText>
+              <CFormInput
+                type="number"
+                value={large}
+                onChange={(e) => setLarge(e.target.value)}
                 placeholder="Item Price"
                 aria-label="Price"
                 aria-describedby="basic-addon1"
@@ -538,8 +603,8 @@ const AddItem = () => {
               <CFormInput
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
-                placeholder="Price"
-                aria-label="Price"
+                placeholder="Discount"
+                aria-label="Discount"
                 aria-describedby="basic-addon1"
               />
               <CInputGroupText id="basic-addon1">%</CInputGroupText>
@@ -560,6 +625,9 @@ const AddItem = () => {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
+              <option unselectable="true">
+                                  Select Category
+                                </option>
               {categories.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}
@@ -571,7 +639,7 @@ const AddItem = () => {
             <CButton color="secondary" onClick={() => setVisibleNew(false)}>
               Close
             </CButton>
-            <CButton color="primary" onClick={() => addCustomer()}>
+            <CButton color="primary" onClick={() => addMenuItem()}>
               Save changes
             </CButton>
           </CModalFooter>

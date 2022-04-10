@@ -95,7 +95,7 @@ const Delivery = () => {
     };
     console.log(body);
     axios
-      .put(url + "/update/order/"+id, headerConfig)
+      .put(url + "/update/order/"+id, body,headerConfig)
       .then((res) => {
         if (res.status === 200) {
           //setBranches(res.data);
@@ -161,6 +161,32 @@ const Delivery = () => {
       });
   }
 
+  function addPayment(order_id){
+    let pay = {
+      order: order_id,
+      totalBill: 0,
+      redeem: 0,
+      offer: 0,
+      totalPoints: 0,
+      method: 0,
+      status: 0,
+      deliveryFee: 0,
+      netAmount: 0,
+    }
+    axios
+      .post(url + "/add/payment" , pay,headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          console.log("RESPONSE RECEIVED: ", res);
+          alert(res.data.id);
+        }
+        //setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
   function addOrder() {
     let custId = "";
     console.log(email);
@@ -198,6 +224,7 @@ const Delivery = () => {
             getOrders()
           }
           setDefaultValues();
+          addPayment(res.data.id)
         })
         .catch((err) => {
           console.log("AXIOS ERROR: ", err);
@@ -383,6 +410,9 @@ const Delivery = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
+                                <option >
+                                    Select Branch
+                                  </option>
                                 {branches.map((item, index) => (
                                   <option key={index} value={item.id}>
                                     {item.name}
@@ -462,6 +492,7 @@ const Delivery = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
+              <option >Select Branch</option>
               {branches.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}

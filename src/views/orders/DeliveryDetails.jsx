@@ -55,7 +55,7 @@ const DeliveryDetails = (props) => {
   const [cartId, setCartId] = useState("");
 
   useEffect(() => {
-    console.log(props);
+    console.log(data);
     setTimeout(() => {
       getCartItems();
       getPayment();
@@ -133,16 +133,31 @@ const DeliveryDetails = (props) => {
   function calculations() {
     let sum = 0;
     let points = 0;
-    items.forEach((item, i) => {
-      sum = sum + item.item.id.price * item.item.quantity;
-      points = points + item.item.id;
+    console.log(items)
+    //const promise =
+     items.forEach((item, i) => {
+      if (item.item.size === "standard") {
+        sum = sum + item.item.id.price * item.item.quantity;
+        points = points + item.item.id.points* item.item.quantity;
+      } else if (item.item.size === "small") {
+        sum = sum + item.item.id.custom.small * item.item.quantity;
+        points = points + item.item.id.points* item.item.quantity;
+      } else {
+        sum = sum + item.item.id.custom.large * item.item.quantity;
+        points = points + item.item.id.points * item.item.quantity;
+      }
       setSum(sum);
-      setPoints(points);
+        setPoints(points);
     });
+    // setTimeout(() => {
+    //   Promise.all(promise).then( ()=> {
+    //     console.log(sum);
+        
+    //   });
+    // }, 1000);
   }
 
   function addMenuItem() {
-    
     let item = {
       item: {
         id: menuItem,
@@ -164,16 +179,27 @@ const DeliveryDetails = (props) => {
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-    calculatePayment()
+    calculatePayment();
   }
 
-  function calculatePayment(){
-    calculations();
-    let pay = {
-      netAmount: payment.deliveryFee + sum - payment.redeem,
-      totalPoints: Number(points),
-      totalBill: sum,
-    };
+  function calculatePayment() {
+    let pay;
+    if(items.length>0){
+      calculations();
+      pay = {
+        netAmount: payment.deliveryFee + sum - payment.redeem,
+        totalPoints: Number(points),
+        totalBill: sum,
+      };
+    }
+    else{
+      pay = {
+        netAmount: 0,
+        totalPoints: 0,
+        totalBill: 0,
+      };
+    }
+    
     //console.log(pay);
     axios
       .put(url + "/update/payment/" + payment.id, pay, headerConfig)
@@ -210,16 +236,16 @@ const DeliveryDetails = (props) => {
       });
   }
 
-  function updateitem(item){
-    console.log(item)
-    setCartId(item.id)
-    setMenuItem(item.item.id._id)
-    setQuantity(item.item.quantity)
-    setSize(item.item.size)
-    setVisible3(!visible3)
+  function updateitem(item) {
+    console.log(item);
+    setCartId(item.id);
+    setMenuItem(item.item.id._id);
+    setQuantity(item.item.quantity);
+    setSize(item.item.size);
+    setVisible3(!visible3);
   }
 
-  function updateMenuItem(){
+  function updateMenuItem() {
     calculations();
     let item = {
       item: {
@@ -232,7 +258,7 @@ const DeliveryDetails = (props) => {
     };
     //console.log(item);
     axios
-      .put(url + "/update/cart/"+cartId, item, headerConfig)
+      .put(url + "/update/cart/" + cartId, item, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
           //console.log(resp);
@@ -245,9 +271,9 @@ const DeliveryDetails = (props) => {
       });
   }
 
-  function deleteItem(id){
+  function deleteItem(id) {
     axios
-      .get(url + "/delete/cart/"+id, headerConfig)
+      .get(url + "/delete/cart/" + id, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
           //console.log(resp);
@@ -386,20 +412,57 @@ const DeliveryDetails = (props) => {
                 <div>{item.item.quantity}</div>
               </CTableDataCell>
               <CTableDataCell>
-                <div>AED {item.item.id.price}</div>
+                {item.item.size === "standard" ? (
+                  <div>AED {item.item.id.price}</div>
+                ) : item.item.size === "small" ? (
+                  <div>AED {item.item.id.custom.small}</div>
+                ) : (
+                  <div>AED {item.item.id.custom.large}</div>
+                )}
               </CTableDataCell>
               <CTableDataCell>
-                <div>AED {item.item.id.price * item.item.quantity}</div>
+                {item.item.size === "standard" ? (
+                  <div>AED {item.item.id.price * item.item.quantity}</div>
+                ) : item.item.size === "small" ? (
+                  <div>
+                    AED {item.item.id.custom.small * item.item.quantity}
+                  </div>
+                ) : (
+                  <div>
+                    AED {item.item.id.custom.large * item.item.quantity}
+                  </div>
+                )}
+                {/* <div>AED {item.item.id.price * item.item.quantity}</div> */}
               </CTableDataCell>
               <CTableDataCell>
-                <div>
-                  AED{" "}
-                  {item.item.id.price * item.item.quantity -
-                    (item.item.id.price *
-                      item.item.quantity *
-                      item.item.id.discount) /
-                      100}
-                </div>
+                {item.item.size === "standard" ? (
+                  <div>
+                    AED{" "}
+                    {item.item.id.price * item.item.quantity -
+                      (item.item.id.price *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                ) : item.item.size === "small" ? (
+                  <div>
+                    AED{" "}
+                    {item.item.id.custom.small * item.item.quantity -
+                      (item.item.id.custom.small *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                ) : (
+                  <div>
+                    AED{" "}
+                    {item.item.id.custom.large * item.item.quantity -
+                      (item.item.id.custom.large *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                )}
               </CTableDataCell>
               <CTableDataCell>
                 <CButton
@@ -621,7 +684,7 @@ const DeliveryDetails = (props) => {
               />
             </CInputGroup>
             <CInputGroup className="mb-3">
-              <CInputGroupText id="basic-addon1">Menu Item</CInputGroupText>
+              <CInputGroupText id="basic-addon1">Size</CInputGroupText>
               <CFormSelect
                 aria-label="Select Size"
                 value={size}
@@ -629,7 +692,7 @@ const DeliveryDetails = (props) => {
               >
                 <option unselectable="true">Select Size</option>
                 <option value="small">small</option>
-                <option value="medium">medium</option>
+                <option value="standard">standard</option>
                 <option value="large">large</option>
               </CFormSelect>
             </CInputGroup>
@@ -689,7 +752,7 @@ const DeliveryDetails = (props) => {
               >
                 <option unselectable="true">Select Size</option>
                 <option value="small">small</option>
-                <option value="medium">medium</option>
+                <option value="standard">standard</option>
                 <option value="large">large</option>
               </CFormSelect>
             </CInputGroup>

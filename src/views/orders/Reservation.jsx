@@ -63,7 +63,7 @@ const Reservation = () => {
     axios
       .get(url + "/get/order/type/Reservation", headerConfig)
       .then((res) => {
-        // console.log(res);
+        console.log(res);
         if (res.status === 200) {
           let data = res.data;
           console.log(data);
@@ -164,78 +164,111 @@ const Reservation = () => {
       });
   }
 
-  function addOrder() {
-    let custId = "";
-    let custom 
-    let orderId = ""
-    console.log(email);
+  function addInOrderTable(custId, custom){
+    let body = {
+      type: "Reservation",
+      customer: custId,
+      location: location,
+      branch: selectedBranch,
+      instructions: instructions,
+      time: new Date(),
+      status: "active",
+      orderNumber: Math.floor(100000 + Math.random() * 900000),
+    };
+    //console.log(body);
     axios
-      .get(url + "/get/customer/email/" + email, headerConfig)
+      .post(url + "/add/order", body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          custId = res.data.id;
-          custom = res.data
           console.log("RESPONSE RECEIVED: ", res);
-          alert(res.data.email);
-          
+          //orderId= res.data.id
+          getOrders()
+          addInDineInTable(custId,res.data.id,custom)
         }
         setDefaultValues();
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-    setTimeout(() => {
-      let body = {
-        type: "Reservation",
-        customer: custId,
-        location: location,
-        branch: selectedBranch,
-        instructions: instructions,
-        time: new Date(),
-        status: "active",
-        orderNumber: Math.floor(100000 + Math.random() * 900000),
-      };
-      console.log(body);
-      axios
-        .post(url + "/add/order", body, headerConfig)
-        .then((res) => {
-          if (res.status === 200) {
-            console.log("RESPONSE RECEIVED: ", res);
-            orderId= res.data.id
-            getOrders()
-          }
-          setDefaultValues();
-        })
-        .catch((err) => {
-          console.log("AXIOS ERROR: ", err);
-        });
-    }, 100);
-    setTimeout(() => {
-      let dine = {
-        //type: "Reservation",
-        seats: seats,
-        customer: custId,
-        name: custom.name,
-        email: custom.email,
-        branch: selectedBranch,
-        phone: custom.phoneNumber,
-        time: value,
-        date: new Date(),
-        order : orderId
-      };
-      console.log(dine);
-      axios
-        .post(url + "/add/dine", dine, headerConfig)
-        .then((res) => {
-          if (res.status === 200) {
-            console.log("RESPONSE RECEIVED: ", res);
-          }
-          //setDefaultValues();
-        })
-        .catch((err) => {
-          console.log("AXIOS ERROR: ", err);
-        });
-    }, 2000);
+  }
+
+  function addInDineInTable(custId, orderId, custom){
+    let dine = {
+      //type: "Reservation",
+      seats: seats,
+      customer: custId,
+      name: custom.name,
+      email: custom.email,
+      branch: selectedBranch,
+      phone: custom.phoneNumber,
+      time: value,
+      date: new Date(),
+      order : orderId
+    };
+    console.log(dine);
+    axios
+      .post(url + "/add/dine", dine, headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          console.log("RESPONSE RECEIVED: ", res);
+          addPayment(orderId)
+        }
+        //setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addPayment(order_id){
+    let pay = {
+      order: order_id,
+      totalBill: 0,
+      redeem: 0,
+      offer: 0,
+      totalPoints: 0,
+      method: 0,
+      status: 0,
+      deliveryFee: 0,
+      netAmount: 0,
+    }
+    axios
+      .post(url + "/add/payment" , pay,headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          console.log("RESPONSE RECEIVED: ", res);
+          //alert(res.data.id);
+        }
+        //setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addOrder() {
+    //let custId = "";
+    //let custom 
+    //let orderId = ""
+    console.log(email);
+    axios
+      .get(url + "/get/customer/email/" + email, headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          //custId = res.data.id;
+          //custom = res.data
+          console.log("RESPONSE RECEIVED: ", res);
+          alert(res.data.email);
+          addInOrderTable(res.data.id, res.data)
+        }
+        setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+    // setTimeout(() => {
+      
+    // }, 2000);
   }
 
   function updateOrderStatus() {
@@ -416,6 +449,9 @@ const Reservation = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
+                                <option >
+                                    Select Branch
+                                  </option>
                                 {branches.map((item, index) => (
                                   <option key={index} value={item.id}>
                                     {item.name}
@@ -514,6 +550,9 @@ const Reservation = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
+              <option >
+                                    Select Branch
+                                  </option>
               {branches.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}

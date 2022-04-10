@@ -384,7 +384,7 @@ const Menu = () => {
                             onClose={() => setVisible(false)}
                           >
                             <CModalHeader>
-                              <CModalTitle>Update Admin</CModalTitle>
+                              <CModalTitle>Update Menu</CModalTitle>
                             </CModalHeader>
                             <CModalBody>
                               <CInputGroup className="mb-3">
@@ -427,6 +427,9 @@ const Menu = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
+                                <option>
+                                      Select Branch
+                                    </option>
                                 {branches.map((item, index) => (
                                     <option key={index} value={item.id}>
                                       {item.name}
@@ -512,6 +515,9 @@ const Menu = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
+              <option>
+                                      Select Branch
+                                    </option>
               {branches.map((item, index) => (
                   <option key={index} value={item.id}>
                     {item.name}
