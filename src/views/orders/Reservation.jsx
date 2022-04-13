@@ -264,9 +264,6 @@ const Reservation = () => {
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
-    // setTimeout(() => {
-      
-    // }, 2000);
   }
 
   function updateOrderStatus() {

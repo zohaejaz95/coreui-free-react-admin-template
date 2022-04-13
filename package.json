@@ -4,6 +4,7 @@
   "proxy": "http://localhost:5000",
   "description": "CoreUI Free React Admin Template",
   "homepage": ".",
+  
   "bugs": {
     "url": "https://github.com/coreui/coreui-free-react-admin-template/issues"
   },
@@ -61,7 +62,7 @@
     "sass": "^1.43.5"
   },
   "engines": {
-    "node": ">=10",
+    "node": "16.13.1",
     "npm": ">=6"
   }
 }
