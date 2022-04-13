@@ -102,8 +102,6 @@ const Slider = () => {
             </CCard>
           </CCol>
         ))}
-
-        <CCol>{/* <CImage src=''></CImage> */}</CCol>
       </CRow>
     </div>
   );

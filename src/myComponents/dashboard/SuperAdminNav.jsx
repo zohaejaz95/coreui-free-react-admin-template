@@ -98,6 +98,11 @@ const Nav = [
     items: [
       {
         component: CNavItem,
+        name: 'Rewards',
+        to: '/app/rewards',
+      },
+      {
+        component: CNavItem,
         name: 'Slider',
         to: '/app/slider',
       },
@@ -122,21 +127,21 @@ const Nav = [
         name: 'Login',
         to: '/login',
       },
-      {
-        component: CNavItem,
-        name: 'Register',
-        to: '/register',
-      },
-      {
-        component: CNavItem,
-        name: 'Error 404',
-        to: '/404',
-      },
-      {
-        component: CNavItem,
-        name: 'Error 500',
-        to: '/500',
-      },
+      // {
+      //   component: CNavItem,
+      //   name: 'Register',
+      //   to: '/register',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Error 404',
+      //   to: '/404',
+      // },
+      // {
+      //   component: CNavItem,
+      //   name: 'Error 500',
+      //   to: '/500',
+      // },
     ],
   },
 ]

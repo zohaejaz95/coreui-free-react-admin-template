@@ -21,6 +21,7 @@ import { cilLockLocked, cilUser } from "@coreui/icons";
 import { adminLogin, getToken, setToken, setRole } from "../../routes/login";
 import { useHistory } from "react-router-dom";
 const axios = require("axios");
+import { getBaseURL } from "src/routes/login";
 
 const Login = (props) => {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ const Login = (props) => {
   const toaster = useRef();
 
   const history = useHistory();
-  const baseURL = "http://localhost:5000";
+  const baseURL = getBaseURL();
 
   const exampleToast = (
     <CToast title="Login Failed">

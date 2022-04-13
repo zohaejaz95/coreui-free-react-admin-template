@@ -44,7 +44,7 @@ const Reservation = () => {
   const [visible3, setVisible3] = useState(false);
   const [status, setStatus] = useState("");
   const url = getBaseURL();
-  const statuses = ["active", "completed", "approved","rejected"];
+  const statuses = ["active", "completed", "approved","rejected", "reserved"];
   const token = sessionStorage.getItem("token");
   const headerConfig = {
     headers: {
@@ -205,7 +205,6 @@ const Reservation = () => {
       date: new Date(),
       order : orderId
     };
-    console.log(dine);
     axios
       .post(url + "/add/dine", dine, headerConfig)
       .then((res) => {
@@ -250,7 +249,6 @@ const Reservation = () => {
     //let custId = "";
     //let custom 
     //let orderId = ""
-    console.log(email);
     axios
       .get(url + "/get/customer/email/" + email, headerConfig)
       .then((res) => {

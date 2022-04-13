@@ -31,6 +31,7 @@ const Delivery = () => {
   const [branches, setBranches] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
   const [detailsData, setDetailsData] = useState([]);
+  const [count, setCount] = useState(0);
   const [email, setEmail] = useState("");
   const [id, setId] = useState("");
   const [location, setLocation] = useState("");
@@ -95,7 +96,7 @@ const Delivery = () => {
     };
     console.log(body);
     axios
-      .put(url + "/update/order/"+id, body,headerConfig)
+      .put(url + "/update/order/" + id, body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           //setBranches(res.data);
@@ -113,10 +114,11 @@ const Delivery = () => {
     //console.log(backendData);
     //setEmail(data.email);
     setId(data.id);
+    setCount(data.customer.rewards);
     setLocation(data.location);
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
-    setInstructions(data.instructions)
+    setSelectedBranch(data.branch);
+    setInstructions(data.instructions);
     setVisible(!visible);
   }
 
@@ -129,13 +131,15 @@ const Delivery = () => {
     setStatus(data.status);
     setEmail(data.email);
     setLocation(data.location);
+    setCount(data.customer.rewards);
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
+    setSelectedBranch(data.branch);
     setVisible3(!visible3);
   }
 
   function viewDetails(data) {
     setDetailsData(data);
+    console.log(data);
     setShowDetails(true);
   }
 
@@ -153,7 +157,7 @@ const Delivery = () => {
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
-          getOrders()
+          getOrders();
         }
       })
       .catch((err) => {
@@ -161,7 +165,7 @@ const Delivery = () => {
       });
   }
 
-  function addPayment(order_id){
+  function addPayment(order_id) {
     let pay = {
       order: order_id,
       totalBill: 0,
@@ -172,9 +176,9 @@ const Delivery = () => {
       status: 0,
       deliveryFee: 0,
       netAmount: 0,
-    }
+    };
     axios
-      .post(url + "/add/payment" , pay,headerConfig)
+      .post(url + "/add/payment", pay, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
@@ -197,7 +201,6 @@ const Delivery = () => {
           custId = res.data.id;
           console.log("RESPONSE RECEIVED: ", res);
           alert(res.data.email);
-          
         }
         setDefaultValues();
       })
@@ -221,10 +224,10 @@ const Delivery = () => {
         .then((res) => {
           if (res.status === 200) {
             console.log("RESPONSE RECEIVED: ", res);
-            getOrders()
+            getOrders();
           }
           setDefaultValues();
-          addPayment(res.data.id)
+          addPayment(res.data.id);
         })
         .catch((err) => {
           console.log("AXIOS ERROR: ", err);
@@ -233,15 +236,81 @@ const Delivery = () => {
   }
 
   function updateOrderStatus() {
-    //console.log(item)
+    getPoints();
     axios
       .put(url + "/update/order/" + id + "/status/" + status, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
+          //console.log("RESPONSE RECEIVED: ", res);
           getOrders();
         }
         setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function getPoints() {
+    axios
+      .get(url + "/get/cart/order/" + id, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          let data = resp.data;
+          addRewards(data);
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addRewards(data) {
+    let counter = 0;
+    console.log(data[0].customer)
+    const prom = data.map((element) => {
+      counter = counter + element.item.quantity * element.item.id.points;
+    });
+    setTimeout(() => {
+      Promise.all(prom).then(function () {
+        let total = count + counter;
+        setCount(total);
+        if (status === "completed") {
+          axios
+            .put(
+              url + "/update/customer/rewards/" + data[0].customer,
+              { rewards: total },
+              headerConfig
+            )
+            .then((resp) => {
+              if (resp.status === 200) {
+                //let data = resp.data;
+                console.log("Rewards Updated!");
+                addCreditHistory(data[0].customer, counter)
+              }
+            })
+            .catch((err) => {
+              console.log("AXIOS ERROR: ", err);
+            });
+        }
+      });
+    }, 1000);
+  }
+
+  function addCreditHistory(customer, amount) {
+    let order = {
+      customer: customer,
+      amount: amount,
+      order: id,
+    };
+    console.log(order)
+    axios
+      .post(url + "/add/credit/order", order, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          //let data = resp.data;
+          console.log("History Record Updated!", resp);
+        }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -410,9 +479,7 @@ const Delivery = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
-                                <option >
-                                    Select Branch
-                                  </option>
+                                <option>Select Branch</option>
                                 {branches.map((item, index) => (
                                   <option key={index} value={item.id}>
                                     {item.name}
@@ -492,7 +559,7 @@ const Delivery = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
-              <option >Select Branch</option>
+              <option>Select Branch</option>
               {branches.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}

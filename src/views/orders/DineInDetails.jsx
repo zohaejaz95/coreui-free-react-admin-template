@@ -156,11 +156,21 @@ const DineInDetails = (props) => {
   function calculations() {
     let sum = 0;
     let points = 0;
-    items.forEach((item, i) => {
-      sum = sum + item.item.id.price * item.item.quantity;
-      points = points + item.item.id;
+    //console.log(items)
+    //const promise =
+     items.forEach((item, i) => {
+      if (item.item.size === "standard") {
+        sum = sum + item.item.id.price * item.item.quantity;
+        points = points + item.item.id.points* item.item.quantity;
+      } else if (item.item.size === "small") {
+        sum = sum + item.item.id.custom.small * item.item.quantity;
+        points = points + item.item.id.points* item.item.quantity;
+      } else {
+        sum = sum + item.item.id.custom.large * item.item.quantity;
+        points = points + item.item.id.points * item.item.quantity;
+      }
       setSum(sum);
-      setPoints(points);
+        setPoints(points);
     });
   }
 
@@ -191,18 +201,26 @@ const DineInDetails = (props) => {
   }
 
   function calculatePayment(){
-    calculations();
-    let pay = {
-      netAmount: payment.deliveryFee + sum - payment.redeem,
-      totalPoints: Number(points),
-      totalBill: sum,
-    };
-    //console.log(pay);
+    let pay;
+    if(items.length>0){
+      calculations();
+      pay = {
+        netAmount: payment.deliveryFee + sum - payment.redeem,
+        totalPoints: Number(points),
+        totalBill: sum,
+      };
+    }
+    else{
+      pay = {
+        netAmount: 0,
+        totalPoints: 0,
+        totalBill: 0,
+      };
+    }
     axios
       .put(url + "/update/payment/" + payment.id, pay, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
-          //console.log(resp);
           getPayment();
         }
       })
@@ -219,12 +237,10 @@ const DineInDetails = (props) => {
       offer: Number(offer),
       totalBill: payment.totalBill,
     };
-    //console.log(body);
     axios
       .put(url + "/update/admin/payment/" + payment.id, body, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
-          //console.log(resp);
           getPayment();
         }
       })
@@ -253,19 +269,17 @@ const DineInDetails = (props) => {
       customer: data.customer._id,
       order: data.id,
     };
-    //console.log(item);
     axios
       .put(url + "/update/cart/"+cartId, item, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
-          //console.log(resp);
           getCartItems();
-          calculatePayment();
         }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
       });
+      calculatePayment();
   }
 
   function deleteItem(id){
@@ -432,17 +446,57 @@ const DineInDetails = (props) => {
                 <div>AED {item.item.id.price}</div>
               </CTableDataCell>
               <CTableDataCell>
-                <div>AED {item.item.id.price * item.item.quantity}</div>
+                {item.item.size === "standard" ? (
+                  <div>AED {item.item.id.price}</div>
+                ) : item.item.size === "small" ? (
+                  <div>AED {item.item.id.custom.small}</div>
+                ) : (
+                  <div>AED {item.item.id.custom.large}</div>
+                )}
               </CTableDataCell>
               <CTableDataCell>
-                <div>
-                  AED{" "}
-                  {item.item.id.price * item.item.quantity -
-                    (item.item.id.price *
-                      item.item.quantity *
-                      item.item.id.discount) /
-                      100}
-                </div>
+                {item.item.size === "standard" ? (
+                  <div>AED {item.item.id.price * item.item.quantity}</div>
+                ) : item.item.size === "small" ? (
+                  <div>
+                    AED {item.item.id.custom.small * item.item.quantity}
+                  </div>
+                ) : (
+                  <div>
+                    AED {item.item.id.custom.large * item.item.quantity}
+                  </div>
+                )}
+                {/* <div>AED {item.item.id.price * item.item.quantity}</div> */}
+              </CTableDataCell>
+              <CTableDataCell>
+                {item.item.size === "standard" ? (
+                  <div>
+                    AED{" "}
+                    {item.item.id.price * item.item.quantity -
+                      (item.item.id.price *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                ) : item.item.size === "small" ? (
+                  <div>
+                    AED{" "}
+                    {item.item.id.custom.small * item.item.quantity -
+                      (item.item.id.custom.small *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                ) : (
+                  <div>
+                    AED{" "}
+                    {item.item.id.custom.large * item.item.quantity -
+                      (item.item.id.custom.large *
+                        item.item.quantity *
+                        item.item.id.discount) /
+                        100}
+                  </div>
+                )}
               </CTableDataCell>
               <CTableDataCell>
                 <CButton
@@ -672,7 +726,7 @@ const DineInDetails = (props) => {
               >
                 <option unselectable="true">Select Size</option>
                 <option value="small">small</option>
-                <option value="medium">medium</option>
+                <option value="standard">standard</option>
                 <option value="large">large</option>
               </CFormSelect>
             </CInputGroup>
@@ -732,7 +786,7 @@ const DineInDetails = (props) => {
               >
                 <option unselectable="true">Select Size</option>
                 <option value="small">small</option>
-                <option value="medium">medium</option>
+                <option value="standard">standard</option>
                 <option value="large">large</option>
               </CFormSelect>
             </CInputGroup>

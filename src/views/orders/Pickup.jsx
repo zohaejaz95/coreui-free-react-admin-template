@@ -41,7 +41,16 @@ const Pickup = () => {
   const [visible3, setVisible3] = useState(false);
   const [status, setStatus] = useState("");
   const url = getBaseURL();
-  const statuses = ["active", "completed"];
+  const [count, setCount] = useState(0)
+  const statuses = [
+    "active",
+    "completed",
+    "approved",
+    "rejected",
+    "reserved",
+    "on way",
+    "delivered",
+  ];
   const token = sessionStorage.getItem("token");
   const headerConfig = {
     headers: {
@@ -95,7 +104,7 @@ const Pickup = () => {
     };
     console.log(body);
     axios
-      .put(url + "/update/order/"+id,body, headerConfig)
+      .put(url + "/update/order/" + id, body, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           //setBranches(res.data);
@@ -110,13 +119,12 @@ const Pickup = () => {
     } else {
       setDefaultValues();
     }
-    //console.log(backendData);
-    //setEmail(data.email);
     setId(data.id);
     setLocation(data.location);
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
-    setInstructions(data.instructions)
+    setSelectedBranch(data.branch);
+    setCount(data.customer.rewards)
+    setInstructions(data.instructions);
     setVisible(!visible);
   }
 
@@ -129,8 +137,9 @@ const Pickup = () => {
     setStatus(data.status);
     setEmail(data.email);
     setLocation(data.location);
+    setCount(data.customer.rewards)
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
+    setSelectedBranch(data.branch);
     setVisible3(!visible3);
   }
 
@@ -152,8 +161,7 @@ const Pickup = () => {
       .get(url + "/delete/order/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          console.log("RESPONSE RECEIVED: ", res);
-          getOrders()
+          getOrders();
         }
       })
       .catch((err) => {
@@ -163,15 +171,12 @@ const Pickup = () => {
 
   function addOrder() {
     let custId = "";
-    console.log(email);
     axios
       .get(url + "/get/customer/email/" + email, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           custId = res.data.id;
-          console.log("RESPONSE RECEIVED: ", res);
           alert(res.data.email);
-          
         }
         setDefaultValues();
       })
@@ -179,34 +184,32 @@ const Pickup = () => {
         console.log("AXIOS ERROR: ", err);
       });
     setTimeout(() => {
-      let body = {
-        type: "Pickup",
-        customer: custId,
-        location: location,
-        branch: selectedBranch,
-        instructions: instructions,
-        time: new Date(),
-        status: "active",
-        orderNumber: Math.floor(100000 + Math.random() * 900000),
-      };
-      console.log(body);
-      axios
-        .post(url + "/add/order", body, headerConfig)
-        .then((res) => {
-          if (res.status === 200) {
-            console.log("RESPONSE RECEIVED: ", res);
-            getOrders()
-          }
-          setDefaultValues();
-        })
-        .catch((err) => {
-          console.log("AXIOS ERROR: ", err);
-        });
+        let body = {
+          type: "Pickup",
+          customer: custId,
+          location: location,
+          branch: selectedBranch,
+          instructions: instructions,
+          time: new Date(),
+          status: "active",
+          orderNumber: Math.floor(100000 + Math.random() * 900000),
+        };
+        axios
+          .post(url + "/add/order", body, headerConfig)
+          .then((res) => {
+            if (res.status === 200) {
+              getOrders();
+            }
+            setDefaultValues();
+          })
+          .catch((err) => {
+            console.log("AXIOS ERROR: ", err);
+          });
     }, 1500);
   }
 
   function updateOrderStatus() {
-    //console.log(item)
+    getPoints
     axios
       .put(url + "/update/order/" + id + "/status/" + status, headerConfig)
       .then((res) => {
@@ -215,6 +218,72 @@ const Pickup = () => {
           getOrders();
         }
         setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function getPoints(){
+    axios
+      .get(url + "/get/cart/order/" + id, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          let data = resp.data;
+          addRewards(data)
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addRewards(data) {
+    let counter = 0;
+    console.log(data[0].customer)
+    const prom = data.map((element) => {
+      counter = counter + element.item.quantity * element.item.id.points;
+    });
+    setTimeout(() => {
+      Promise.all(prom).then(function () {
+        let total = count + counter;
+        setCount(total);
+        if (status === "completed") {
+          axios
+            .put(
+              url + "/update/customer/rewards/" + data[0].customer,
+              { rewards: total },
+              headerConfig
+            )
+            .then((resp) => {
+              if (resp.status === 200) {
+                //let data = resp.data;
+                console.log("Rewards Updated!");
+                addCreditHistory(data[0].customer, counter)
+              }
+            })
+            .catch((err) => {
+              console.log("AXIOS ERROR: ", err);
+            });
+        }
+      });
+    }, 1000);
+  }
+
+  function addCreditHistory(customer, amount) {
+    let order = {
+      customer: customer,
+      amount: amount,
+      order: id,
+    };
+    console.log(order)
+    axios
+      .post(url + "/add/credit/order", order, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          //let data = resp.data;
+          console.log("History Record Updated!", resp);
+        }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -383,6 +452,7 @@ const Pickup = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
+                                <option >Select Branch</option>
                                 {branches.map((item, index) => (
                                   <option key={index} value={item.id}>
                                     {item.name}
@@ -462,6 +532,7 @@ const Pickup = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
+              <option >Select Branch</option>
               {branches.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}

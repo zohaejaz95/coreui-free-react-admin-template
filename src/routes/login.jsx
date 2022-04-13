@@ -1,15 +1,16 @@
 import { useHistory } from "react-router-dom";
 const axios = require("axios");
-const baseURL = "http://localhost:5000";
+//const baseURL = "http://localhost:5000";
 var token = "";
 var role = "";
 
 export function  getBaseURL(){
-  return baseURL;
+  //return baseURL;
+  return "https://ath-backend.herokuapp.com"
 }
 export const makeAPICall = async () => {
   try {
-    const response = await fetch("http://localhost:5000/", { mode: "cors" });
+    const response = await fetch("https://ath-backend.herokuapp.com/", { mode: "cors" });
     const data = await response.json();
     console.log({ data });
   } catch (e) {

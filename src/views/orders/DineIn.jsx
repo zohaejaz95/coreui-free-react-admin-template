@@ -24,17 +24,17 @@ import {
 const axios = require("axios");
 import { getBaseURL } from "src/routes/login";
 import DineInDetails from "./DineInDetails";
-import TimePicker from 'react-time-picker';
+import TimePicker from "react-time-picker";
 
 const DineIn = () => {
   const [backendData, setBackendData] = useState([]);
-  const [value, onChange] = useState('10:00');
+  const [value, onChange] = useState("10:00");
   const [selectedBranch, setSelectedBranch] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
   const [detailsData, setDetailsData] = useState([]);
   const [email, setEmail] = useState("");
-  const [id, setId] = useState("");
+  const [id, setId] = useState("");const [count, setCount] = useState(0)
   const [location, setLocation] = useState("");
   const [instructions, setInstructions] = useState("");
   const [branch, setBranch] = useState("");
@@ -44,7 +44,7 @@ const DineIn = () => {
   const [visible3, setVisible3] = useState(false);
   const [status, setStatus] = useState("");
   const url = getBaseURL();
-  const statuses = ["active", "completed", "approved","rejected"];
+  const statuses = ["active", "completed", "approved", "rejected"];
   const token = sessionStorage.getItem("token");
   const headerConfig = {
     headers: {
@@ -98,7 +98,7 @@ const DineIn = () => {
     };
     console.log(body);
     axios
-      .put(url + "/update/order/"+id, headerConfig)
+      .put(url + "/update/order/" + id, headerConfig)
       .then((res) => {
         if (res.status === 200) {
           //setBranches(res.data);
@@ -118,8 +118,9 @@ const DineIn = () => {
     setId(data.id);
     setLocation(data.location);
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
-    setInstructions(data.instructions)
+    setCount(data.customer.rewards)
+    setSelectedBranch(data.branch);
+    setInstructions(data.instructions);
     setVisible(!visible);
   }
 
@@ -132,8 +133,9 @@ const DineIn = () => {
     setStatus(data.status);
     setEmail(data.email);
     setLocation(data.location);
+    setCount(data.customer.rewards)
     setBranch(data.branch);
-    setSelectedBranch(data.branch)
+    setSelectedBranch(data.branch);
     setVisible3(!visible3);
   }
 
@@ -156,8 +158,34 @@ const DineIn = () => {
       .then((res) => {
         if (res.status === 200) {
           console.log("RESPONSE RECEIVED: ", res);
-          getOrders()
+          getOrders();
         }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addPayment(order_id) {
+    let pay = {
+      order: order_id,
+      totalBill: 0,
+      redeem: 0,
+      offer: 0,
+      totalPoints: 0,
+      method: 0,
+      status: 0,
+      deliveryFee: 0,
+      netAmount: 0,
+    };
+    axios
+      .post(url + "/add/payment", pay, headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          console.log("RESPONSE RECEIVED: ", res);
+          alert(res.data.id);
+        }
+        //setDefaultValues();
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -166,18 +194,13 @@ const DineIn = () => {
 
   function addOrder() {
     let custId = "";
-    let custom 
-    let orderId = ""
-    console.log(email);
     axios
       .get(url + "/get/customer/email/" + email, headerConfig)
       .then((res) => {
         if (res.status === 200) {
-          custId = res.data.id;
-          custom = res.data
+          custId = res.data;
           console.log("RESPONSE RECEIVED: ", res);
           alert(res.data.email);
-          
         }
         setDefaultValues();
       })
@@ -187,7 +210,7 @@ const DineIn = () => {
     setTimeout(() => {
       let body = {
         type: "DineIn",
-        customer: custId,
+        customer: custId.id,
         location: location,
         branch: selectedBranch,
         instructions: instructions,
@@ -201,45 +224,45 @@ const DineIn = () => {
         .then((res) => {
           if (res.status === 200) {
             console.log("RESPONSE RECEIVED: ", res);
-            orderId= res.data.id
-            getOrders()
+            getOrders();
           }
           setDefaultValues();
+          addPayment(res.data.id);
+          setDineIn(custId, res.data.id);
         })
         .catch((err) => {
           console.log("AXIOS ERROR: ", err);
         });
-    }, 100);
-    setTimeout(() => {
-      let dine = {
-        //type: "DineIn",
-        seats: seats,
-        customer: custId,
-        name: custom.name,
-        email: custom.email,
-        branch: selectedBranch,
-        phone: custom.phoneNumber,
-        time: value,
-        date: new Date(),
-        order : orderId
-      };
-      console.log(dine);
-      axios
-        .post(url + "/add/dine", dine, headerConfig)
-        .then((res) => {
-          if (res.status === 200) {
-            console.log("RESPONSE RECEIVED: ", res);
-          }
-          //setDefaultValues();
-        })
-        .catch((err) => {
-          console.log("AXIOS ERROR: ", err);
-        });
-    }, 2000);
+    }, 1500);
+  }
+
+  function setDineIn(custom, orderId) {
+    let dine = {
+      seats: seats,
+      customer: custom.id,
+      name: custom.name,
+      email: custom.email,
+      branch: selectedBranch,
+      phone: custom.phoneNumber,
+      time: value,
+      date: new Date(),
+      order: orderId,
+    };
+    axios
+      .post(url + "/add/dine", dine, headerConfig)
+      .then((res) => {
+        if (res.status === 200) {
+          console.log("DINE IN: ", res);
+        }
+        //setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
   }
 
   function updateOrderStatus() {
-    //console.log(item)
+    getPoints()
     axios
       .put(url + "/update/order/" + id + "/status/" + status, headerConfig)
       .then((res) => {
@@ -248,6 +271,72 @@ const DineIn = () => {
           getOrders();
         }
         setDefaultValues();
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function getPoints(){
+    axios
+      .get(url + "/get/cart/order/" + id, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          let data = resp.data;
+          addRewards(data)
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+  }
+
+  function addRewards(data) {
+    let counter = 0;
+    console.log(data[0].customer)
+    const prom = data.map((element) => {
+      counter = counter + element.item.quantity * element.item.id.points;
+    });
+    setTimeout(() => {
+      Promise.all(prom).then(function () {
+        let total = count + counter;
+        setCount(total);
+        if (status === "completed") {
+          axios
+            .put(
+              url + "/update/customer/rewards/" + data[0].customer,
+              { rewards: total },
+              headerConfig
+            )
+            .then((resp) => {
+              if (resp.status === 200) {
+                //let data = resp.data;
+                console.log("Rewards Updated!");
+                addCreditHistory(data[0].customer, counter)
+              }
+            })
+            .catch((err) => {
+              console.log("AXIOS ERROR: ", err);
+            });
+        }
+      });
+    }, 1000);
+  }
+
+  function addCreditHistory(customer, amount) {
+    let order = {
+      customer: customer,
+      amount: amount,
+      order: id,
+    };
+    console.log(order)
+    axios
+      .post(url + "/add/credit/order", order, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          //let data = resp.data;
+          console.log("History Record Updated!", resp);
+        }
       })
       .catch((err) => {
         console.log("AXIOS ERROR: ", err);
@@ -416,6 +505,7 @@ const DineIn = () => {
                                   setSelectedBranch(e.target.value)
                                 }
                               >
+                                <option>Select Branch</option>
                                 {branches.map((item, index) => (
                                   <option key={index} value={item.id}>
                                     {item.name}
@@ -491,11 +581,9 @@ const DineIn = () => {
               />
             </CInputGroup>
             <CInputGroup className="mb-3">
-              <CInputGroupText id="basic-addon1">
-               Seats
-              </CInputGroupText>
+              <CInputGroupText id="basic-addon1">Seats</CInputGroupText>
               <CFormInput
-              type="number"
+                type="number"
                 value={seats}
                 onChange={(e) => setSeats(e.target.value)}
                 placeholder="Total seats"
@@ -504,9 +592,7 @@ const DineIn = () => {
               />
             </CInputGroup>
             <CInputGroup className="mb-3">
-              <CInputGroupText id="basic-addon1">
-                Time
-              </CInputGroupText>
+              <CInputGroupText id="basic-addon1">Time</CInputGroupText>
               <TimePicker onChange={onChange} value={value} />
             </CInputGroup>
             <CFormSelect
@@ -514,6 +600,7 @@ const DineIn = () => {
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
             >
+              <option>Select Branch</option>
               {branches.map((item, index) => (
                 <option key={index} value={item.id}>
                   {item.name}
@@ -553,7 +640,7 @@ const DineIn = () => {
               ))}
             </CFormSelect>
           </CModalBody>
-          
+
           <CModalFooter>
             <CButton color="secondary" onClick={() => setVisible3(false)}>
               Close

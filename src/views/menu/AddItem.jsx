@@ -164,6 +164,8 @@ const AddItem = () => {
     setCategory(data.category);
     setPoints(data.points);
     setPrice(data.price);
+    setSmall(data.custom.small);
+    setLarge(data.custom.large)
     setDiscount(data.discount);
     setVisible(!visible);
   }

@@ -133,7 +133,7 @@ const DeliveryDetails = (props) => {
   function calculations() {
     let sum = 0;
     let points = 0;
-    console.log(items)
+    //console.log(items)
     //const promise =
      items.forEach((item, i) => {
       if (item.item.size === "standard") {
@@ -181,6 +181,29 @@ const DeliveryDetails = (props) => {
       });
     calculatePayment();
   }
+  function updateMenuItem() {
+    //calculations();
+    let item = {
+      item: {
+        id: menuItem,
+        quantity: quantity,
+        size: size,
+      },
+      customer: data.customer._id,
+      order: data.id,
+    };
+    axios
+      .put(url + "/update/cart/" + cartId, item, headerConfig)
+      .then((resp) => {
+        if (resp.status === 200) {
+          getCartItems();
+        }
+      })
+      .catch((err) => {
+        console.log("AXIOS ERROR: ", err);
+      });
+      calculatePayment();
+  }
 
   function calculatePayment() {
     let pay;
@@ -199,13 +222,10 @@ const DeliveryDetails = (props) => {
         totalBill: 0,
       };
     }
-    
-    //console.log(pay);
     axios
       .put(url + "/update/payment/" + payment.id, pay, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
-          //console.log(resp);
           getPayment();
         }
       })
@@ -222,12 +242,10 @@ const DeliveryDetails = (props) => {
       offer: Number(offer),
       totalBill: payment.totalBill,
     };
-    //console.log(body);
     axios
       .put(url + "/update/admin/payment/" + payment.id, body, headerConfig)
       .then((resp) => {
         if (resp.status === 200) {
-          //console.log(resp);
           getPayment();
         }
       })
@@ -243,32 +261,6 @@ const DeliveryDetails = (props) => {
     setQuantity(item.item.quantity);
     setSize(item.item.size);
     setVisible3(!visible3);
-  }
-
-  function updateMenuItem() {
-    calculations();
-    let item = {
-      item: {
-        id: menuItem,
-        quantity: quantity,
-        size: size,
-      },
-      customer: data.customer._id,
-      order: data.id,
-    };
-    //console.log(item);
-    axios
-      .put(url + "/update/cart/" + cartId, item, headerConfig)
-      .then((resp) => {
-        if (resp.status === 200) {
-          //console.log(resp);
-          getCartItems();
-          calculatePayment();
-        }
-      })
-      .catch((err) => {
-        console.log("AXIOS ERROR: ", err);
-      });
   }
 
   function deleteItem(id) {

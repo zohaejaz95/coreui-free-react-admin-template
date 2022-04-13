@@ -18,8 +18,9 @@ const AddItem = React.lazy(() => import("./views/menu/AddItem"));
 //mobile app
 const Slider = React.lazy(() => import("./views/mobile/Slider"));
 const Gifts = React.lazy(() => import("./views/mobile/Gifts"));
+const Rewards = React.lazy(() => import("./views/rewards/Rewards"));
 
-//dshboard
+//dashboard
 const Colors = React.lazy(() => import("./views/theme/colors/Colors"));
 const Typography = React.lazy(() =>
   import("./views/theme/typography/Typography")
@@ -111,6 +112,7 @@ const routes = [
   { path: "/app", name: "App", component: Slider, exact: true },
   { path: "/app/slider", name: "Home Slider", component: Slider },
   { path: "/app/gifts", name: "Home Gifts", component: Gifts },
+  { path: "/app/rewards", name: "Rewards", component: Rewards },
 
   { path: "/theme", name: "Theme", component: Colors, exact: true },
   { path: "/theme/colors", name: "Colors", component: Colors },
