@@ -6,11 +6,12 @@ var role = "";
 
 export function  getBaseURL(){
   //return baseURL;
-  return "https://ath-backend.herokuapp.com"
+  // return "https://ath-backend.herokuapp.com"
+  return "http://localhost:5000"
 }
 export const makeAPICall = async () => {
   try {
-    const response = await fetch("https://ath-backend.herokuapp.com/", { mode: "cors" });
+    const response = await fetch("http://localhost:5000", { mode: "cors" });
     const data = await response.json();
     console.log({ data });
   } catch (e) {

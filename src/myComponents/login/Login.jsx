@@ -67,11 +67,16 @@ const Login = (props) => {
         "Access-Control-Allow-Origin": "*",
       },
     };
+
     axios
-      .get(
-        baseURL + "/login/admin/" + email + "/" + password,
-        { mode: "cors" },
-        axiosConfig
+      .post(
+        baseURL + "/login/admin",
+        {
+          email: email,
+          password: password
+        },
+        // { mode: "cors" },
+        // axiosConfig
       )
       .then((res) => {
         if (res.status === 200) {
